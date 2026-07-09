@@ -16,6 +16,7 @@ function App() {
   const [error, setError] = useState("");
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // Track Network Status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -27,6 +28,7 @@ function App() {
     };
   }, []);
 
+  // Simplified Geolocation Routine on Mount (No High Accuracy)
   useEffect(() => {
     if (!isOnline) {
       setError("You are offline. Please check your internet connection.");
@@ -36,6 +38,7 @@ function App() {
       handleLocationDenied();
       return;
     }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const latitude = position.coords.latitude;
@@ -43,17 +46,18 @@ function App() {
         fetchWeatherData(latitude, longitude, null);
       },
       (err) => {
-        handleLocationDenied();
         console.log("Geolocation error:", err);
+        handleLocationDenied();
       },
       {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
+        enableHighAccuracy: false, // ⚡ Off: Lightweight network-based location for instant mobile loading
+        timeout: 10000, // 10 seconds max wait time
+        maximumAge: Infinity, // Pull instantly from browser cache if available
       },
     );
   }, [isOnline]);
 
+  // Combined Current Weather and 5-Day/3-Hour Forecast Fetch Logic
   const fetchWeatherData = async (latitude, longitude, city) => {
     if (!isOnline) {
       setError("No internet connection. Please check your network.");
@@ -90,6 +94,7 @@ function App() {
       setWeather(currentData);
 
       if (forecastData.list) {
+        // Filter out the 3-hour chunks to get one clean midday snapshot per day
         const dailyData = forecastData.list.filter((item) =>
           item.dt_txt.includes("12:00:00"),
         );
@@ -109,6 +114,7 @@ function App() {
     fetchWeatherData(null, null, "Lagos");
   };
 
+  // Triggered when a user hits Enter in the search box
   const handleSearchEnter = () => {
     if (!inputValue.trim()) return;
     fetchWeatherData(null, null, inputValue.trim());
@@ -116,16 +122,19 @@ function App() {
 
   return (
     <div className="app-container minimal-layout">
+      {/* 👑 Application Name Header Title */}
       <header className="app-branding-header">
-        <h1 className="app-main-title">Weather Sage</h1>
+        <h1 className="app-main-title">weather sage</h1>
       </header>
 
+      {/* Top Search Component placement */}
       <SearchBar
         inputValue={inputValue}
         setInputValue={setInputValue}
         onEnter={handleSearchEnter}
       />
 
+      {/* Main Dynamic Weather Display Workspace Component */}
       <WeatherDisplay
         weather={weather}
         forecast={forecast}
@@ -133,6 +142,7 @@ function App() {
         error={error}
       />
 
+      {/* Center-aligned Tagline Footer */}
       <footer className="minimal-footer">
         <p>Developed by Temple Chidera</p>
       </footer>
